@@ -1,0 +1,103 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;800&family=Manrope:wght@400;500;600&family=Space+Grotesk:wght@500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 98%;
+    --foreground: 200 25% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 200 25% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 200 25% 15%;
+
+    --primary: 174 100% 37%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 291 64% 42%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 200 20% 94%;
+    --muted-foreground: 200 10% 45%;
+
+    --accent: 291 64% 42%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 200 20% 90%;
+    --input: 200 20% 90%;
+    --ring: 174 100% 37%;
+
+    --radius: 0.75rem;
+    
+    --teal-primary: 174 100% 37%;
+    --teal-light: 174 50% 85%;
+    --purple-accent: 291 64% 42%;
+    --purple-light: 291 50% 90%;
+    --neutral-dark: 200 25% 15%;
+    --neutral-light: 200 20% 94%;
+    --warm-white: 0 0% 98%;
+    --success: 122 39% 49%;
+    --warning: 36 100% 50%;
+  }
+
+  .dark {
+    --background: 200 25% 15%;
+    --foreground: 0 0% 98%;
+
+    --card: 200 20% 18%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 200 20% 18%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 174 100% 37%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 291 64% 42%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 200 20% 25%;
+    --muted-foreground: 200 10% 65%;
+
+    --accent: 291 64% 42%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 200 20% 25%;
+    --input: 200 20% 25%;
+    --ring: 174 100% 37%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-body;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display;
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: 'Outfit', sans-serif;
+  }
+  .font-body {
+    font-family: 'Manrope', sans-serif;
+  }
+  .font-accent {
+    font-family: 'Space Grotesk', sans-serif;
+  }
+}
