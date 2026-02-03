@@ -1,100 +1,70 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Navigation from '@/components/layout/Navigation';
 import Footer from '@/components/layout/Footer';
 import Chatbot from '@/components/shared/Chatbot';
-import { Trophy, Calendar, Users, Clock, Award, FileText, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { Trophy, Calendar, Users, Clock, Award, FileText, ArrowRight, CheckCircle2, Loader2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-
-const contests = [
-  {
-    id: 1,
-    title: 'Concurso de Fotografia Social',
-    description: 'Capture momentos que mostram o impacto da ação comunitária. Buscamos imagens que contem histórias de transformação social.',
-    image: 'https://images.unsplash.com/photo-1452587925148-ce544e77e70d?w=800&q=80',
-    deadline: '30 de Março, 2024',
-    daysLeft: 45,
-    participants: 78,
-    maxParticipants: 150,
-    prize: '€500 + Exposição',
-    category: 'Fotografia',
-    status: 'active',
-    rules: [
-      'Fotos devem ser originais e inéditas',
-      'Tema: Impacto Social na Comunidade',
-      'Máximo de 3 fotografias por participante',
-      'Formato: JPEG ou PNG, mínimo 3000px',
-    ],
-  },
-  {
-    id: 2,
-    title: 'Projeto de Inovação Social',
-    description: 'Apresente ideias inovadoras para resolver desafios comunitários. O melhor projeto receberá apoio para implementação.',
-    image: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&q=80',
-    deadline: '15 de Abril, 2024',
-    daysLeft: 61,
-    participants: 34,
-    maxParticipants: 50,
-    prize: '€1000 + Mentoria',
-    category: 'Projetos',
-    status: 'active',
-    rules: [
-      'Projetos devem abordar problemas sociais reais',
-      'Apresentação em formato pitch deck',
-      'Equipes de até 4 pessoas',
-      'Demonstrar viabilidade e impacto',
-    ],
-  },
-  {
-    id: 3,
-    title: 'Concurso de Redação Solidária',
-    description: 'Escreva sobre solidariedade e seu impacto na sociedade. Textos selecionados serão publicados em nossa revista.',
-    image: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?w=800&q=80',
-    deadline: '1 de Maio, 2024',
-    daysLeft: 77,
-    participants: 56,
-    maxParticipants: 200,
-    prize: '€300 + Publicação',
-    category: 'Literatura',
-    status: 'active',
-    rules: [
-      'Textos entre 1000 e 2500 palavras',
-      'Tema: Solidariedade em Ação',
-      'Originais e inéditos',
-      'Formato: Word ou PDF',
-    ],
-  },
-  {
-    id: 4,
-    title: 'Hackathon Solidário 2023',
-    description: 'Desenvolvimento de soluções tecnológicas para ONGs locais.',
-    image: 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800&q=80',
-    deadline: '10 de Dezembro, 2023',
-    daysLeft: 0,
-    participants: 120,
-    maxParticipants: 120,
-    prize: '€2000 + Implementação',
-    category: 'Tecnologia',
-    status: 'finished',
-    winner: 'Equipe CodeForGood',
-    rules: [],
-  },
-];
+import { useToast } from '@/hooks/use-toast';
+import contestsService, { Contest } from '@/services/contests.service';
 
 const categories = ['Todos', 'Fotografia', 'Projetos', 'Literatura', 'Tecnologia'];
 
 export default function Concursos() {
   const [selectedCategory, setSelectedCategory] = useState('Todos');
-  const [activeTab, setActiveTab] = useState('active');
+  const [activeTab, setActiveTab] = useState<'active' | 'finished'>('active');
+  const [contests, setContests] = useState<Contest[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
-  const filteredContests = contests.filter((contest) => {
-    const matchesCategory = selectedCategory === 'Todos' || contest.category === selectedCategory;
-    const matchesStatus = contest.status === activeTab;
-    return matchesCategory && matchesStatus;
-  });
+  useEffect(() => {
+    fetchContests();
+  }, [activeTab, selectedCategory]);
+
+  const fetchContests = async () => {
+    try {
+      setLoading(true);
+      const params: any = {};
+
+      if (selectedCategory !== 'Todos') {
+        params.category = selectedCategory.toLowerCase();
+      }
+
+      const data = activeTab === 'active'
+        ? await contestsService.getActive(params)
+        : await contestsService.getFinished(params);
+
+      setContests(data);
+    } catch {
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível carregar os concursos.',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleParticipate = async (contestId: number) => {
+    try {
+      await contestsService.participate(contestId);
+      toast({
+        title: 'Sucesso!',
+        description: 'Você foi registrado no concurso com sucesso.',
+      });
+      fetchContests();
+    } catch {
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível realizar a inscrição.',
+        variant: 'destructive',
+      });
+    }
+  };
 
   return (
     <div className="min-h-screen">
@@ -107,7 +77,7 @@ export default function Concursos() {
             <div className="absolute top-0 left-1/3 w-96 h-96 bg-white rounded-full blur-3xl animate-pulse" />
             <div className="absolute bottom-0 right-1/3 w-96 h-96 bg-white rounded-full blur-3xl animate-pulse delay-1000" />
           </div>
-          
+
           <div className="container mx-auto px-4 lg:px-8 relative z-10">
             <div className="max-w-4xl mx-auto text-center">
               <span className="inline-block px-6 py-2 bg-white/20 backdrop-blur-sm text-white rounded-full text-sm font-accent font-medium mb-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -154,17 +124,16 @@ export default function Concursos() {
         {/* Contests List */}
         <section className="py-20 lg:py-32 bg-[#FAFAFA]">
           <div className="container mx-auto px-4 lg:px-8">
-            {/* Tabs */}
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full mb-8">
+            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'active' | 'finished')} className="w-full mb-8">
               <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 mb-8">
                 <TabsList className="bg-white shadow-md rounded-full p-1">
-                  <TabsTrigger 
-                    value="active" 
+                  <TabsTrigger
+                    value="active"
                     className="rounded-full px-8 data-[state=active]:bg-[#00BFA5] data-[state=active]:text-white"
                   >
                     Concursos Ativos
                   </TabsTrigger>
-                  <TabsTrigger 
+                  <TabsTrigger
                     value="finished"
                     className="rounded-full px-8 data-[state=active]:bg-[#00BFA5] data-[state=active]:text-white"
                   >
@@ -193,10 +162,14 @@ export default function Concursos() {
               </div>
 
               <TabsContent value="active">
-                {filteredContests.length > 0 ? (
+                {loading ? (
+                  <div className="flex justify-center items-center py-20">
+                    <Loader2 className="w-8 h-8 animate-spin text-[#00BFA5]" />
+                  </div>
+                ) : contests.length > 0 ? (
                   <div className="space-y-8">
-                    {filteredContests.map((contest) => (
-                      <ContestCard key={contest.id} contest={contest} />
+                    {contests.map((contest) => (
+                      <ContestCard key={contest.id} contest={contest} onParticipate={handleParticipate} />
                     ))}
                   </div>
                 ) : (
@@ -208,9 +181,13 @@ export default function Concursos() {
               </TabsContent>
 
               <TabsContent value="finished">
-                {filteredContests.length > 0 ? (
+                {loading ? (
+                  <div className="flex justify-center items-center py-20">
+                    <Loader2 className="w-8 h-8 animate-spin text-[#00BFA5]" />
+                  </div>
+                ) : contests.length > 0 ? (
                   <div className="space-y-8">
-                    {filteredContests.map((contest) => (
+                    {contests.map((contest) => (
                       <ContestCard key={contest.id} contest={contest} isFinished />
                     ))}
                   </div>
@@ -232,26 +209,27 @@ export default function Concursos() {
 }
 
 interface ContestCardProps {
-  contest: typeof contests[0];
+  contest: Contest;
   isFinished?: boolean;
+  onParticipate?: (id: number) => void;
 }
 
-function ContestCard({ contest, isFinished }: ContestCardProps) {
+function ContestCard({ contest, isFinished, onParticipate }: ContestCardProps) {
   const [showRules, setShowRules] = useState(false);
-  const progressPercent = (contest.participants / contest.maxParticipants) * 100;
+  const categoryLabel = categories.find(c => c.toLowerCase() === contest.category) || contest.category;
 
   return (
     <Card className="overflow-hidden border-none shadow-lg hover:shadow-2xl transition-all duration-300">
       <div className="grid grid-cols-1 lg:grid-cols-3">
         <div className="relative h-64 lg:h-auto overflow-hidden">
           <img
-            src={contest.image}
+            src={contest.image_url || 'https://images.unsplash.com/photo-1452587925148-ce544e77e70d?w=800&q=80'}
             alt={contest.title}
             className={`w-full h-full object-cover ${isFinished ? 'grayscale' : ''}`}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent lg:bg-gradient-to-r" />
           <Badge className="absolute top-4 left-4 bg-amber-500 hover:bg-amber-500/90 font-accent">
-            {contest.category}
+            {categoryLabel}
           </Badge>
           {isFinished && (
             <Badge className="absolute top-4 right-4 bg-gray-500 hover:bg-gray-500/90 font-accent">
@@ -275,14 +253,14 @@ function ContestCard({ contest, isFinished }: ContestCardProps) {
                   <Calendar size={18} className="mr-2 text-[#00BFA5]" />
                   <div>
                     <div className="text-xs text-gray-500">Prazo</div>
-                    <div className="text-sm font-medium">{contest.deadline}</div>
+                    <div className="text-sm font-medium">{contest.formatted_deadline}</div>
                   </div>
                 </div>
                 <div className="flex items-center text-gray-600">
                   <Users size={18} className="mr-2 text-[#00BFA5]" />
                   <div>
                     <div className="text-xs text-gray-500">Participantes</div>
-                    <div className="text-sm font-medium">{contest.participants}/{contest.maxParticipants}</div>
+                    <div className="text-sm font-medium">{contest.participants}/{contest.max_participants}</div>
                   </div>
                 </div>
                 <div className="flex items-center text-gray-600">
@@ -297,7 +275,7 @@ function ContestCard({ contest, isFinished }: ContestCardProps) {
                     <Clock size={18} className="mr-2 text-[#9C27B0]" />
                     <div>
                       <div className="text-xs text-gray-500">Restam</div>
-                      <div className="text-sm font-medium">{contest.daysLeft} dias</div>
+                      <div className="text-sm font-medium">{contest.days_left} dias</div>
                     </div>
                   </div>
                 )}
@@ -316,14 +294,14 @@ function ContestCard({ contest, isFinished }: ContestCardProps) {
                 <div className="mb-6">
                   <div className="flex justify-between text-sm mb-2">
                     <span className="text-gray-600">Vagas preenchidas</span>
-                    <span className="font-semibold">{Math.round(progressPercent)}%</span>
+                    <span className="font-semibold">{Math.round(contest.progress_percent)}%</span>
                   </div>
-                  <Progress value={progressPercent} className="h-2" />
+                  <Progress value={contest.progress_percent} className="h-2" />
                 </div>
               )}
 
               {/* Rules */}
-              {!isFinished && contest.rules.length > 0 && (
+              {!isFinished && contest.rules && contest.rules.length > 0 && (
                 <div>
                   <button
                     onClick={() => setShowRules(!showRules)}
@@ -332,7 +310,7 @@ function ContestCard({ contest, isFinished }: ContestCardProps) {
                     <FileText size={16} className="mr-2" />
                     {showRules ? 'Ocultar Regras' : 'Ver Regras'}
                   </button>
-                  
+
                   {showRules && (
                     <div className="bg-gray-50 rounded-xl p-4 space-y-2">
                       {contest.rules.map((rule, index) => (
@@ -350,7 +328,11 @@ function ContestCard({ contest, isFinished }: ContestCardProps) {
             <div className="flex flex-col gap-3 lg:w-48">
               {!isFinished ? (
                 <>
-                  <Button size="lg" className="bg-[#00BFA5] hover:bg-[#00BFA5]/90 group">
+                  <Button
+                    size="lg"
+                    className="bg-[#00BFA5] hover:bg-[#00BFA5]/90 group"
+                    onClick={() => onParticipate?.(contest.id)}
+                  >
                     Participar
                     <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" size={18} />
                   </Button>
